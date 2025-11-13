@@ -178,7 +178,7 @@ folium.GeoJson(
 ).add_to(m)
 
 # Mostrar mapa en Streamlit
-st.title('Mapa de Energía Activa - ZNI Colombia')
+st.subheader('Mapa de Energía Activa - ZNI Colombia')
 st_folium(m,  height=800, use_container_width=True)
 
 ###############################################################################
