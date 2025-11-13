@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import folium
+from streamlit_folium import st_folium
+import json
 
 ruta = 'https://github.com/juliandariogiraldoocampo/analisis_taltech/raw/refs/heads/main/explorador/Estado_de_la_prestaci%C3%B3n_del_servicio_de_energ%C3%ADa_en_Zonas_No_Interconectadas_20251021.csv'
 df = pd.read_csv(ruta)
@@ -111,6 +114,72 @@ with st.container(border=True):
 
     with st.expander('Mostrar Datos Energía Reactiva anual por Municipio'):
         st.dataframe(df_pivote)
+
+########################################################################
+#                             MAPA COLOMBIA                            #
+########################################################################
+st.markdown('<a id="mapa-colombia"></a><br>', unsafe_allow_html=True)
+# Cargar GeoJSON
+with open('data/colombia_energia_zni.geojson', 'r', encoding='utf-8') as f:
+    geojson_data = json.load(f)
+
+# Crear mapa base centrado en Colombia
+m = folium.Map(location=[4.5, -74], zoom_start=6)
+
+# Función para obtener color según valor de ENERGÍA ACTIVA
+def get_color(feature):
+    energia = feature['properties'].get('ENERGÍA ACTIVA')
+    if energia is None or energia == '':
+        return None 
+    
+    # Convertir a número si es string
+    try:
+        energia = float(str(energia).replace(',', ''))
+    except:
+        return None
+    
+    # Escala de colores según valor
+    if energia < 5000000:
+        return "#ee4318"
+    elif energia < 10000000:
+        return "#e07136"
+    elif energia < 50000000:
+        return "#fbc04a"
+    elif energia < 100000000:
+        return "#dedb26"
+    else:
+        return "#71da27"
+
+# Función de estilo para cada feature
+def style_function(feature):
+    color = get_color(feature)
+    if color is None:
+        return {
+            'fillColor': 'transparent',
+            'color': 'gray',
+            'weight': 1,
+            'fillOpacity': 0
+        }
+    return {
+        'fillColor': color,
+        'color': 'black',
+        'weight': 1,
+        'fillOpacity': 0.6
+    }
+
+# Agregar GeoJSON al mapa
+folium.GeoJson(
+    geojson_data,
+    style_function=style_function,
+    tooltip=folium.GeoJsonTooltip(
+        fields=['NOMBRE_DPT', 'ENERGÍA ACTIVA', 'ENERGÍA REACTIVA'],
+        aliases=['Departamento:', 'Energía Activa:', 'Energía Reactiva:']
+    )
+).add_to(m)
+
+# Mostrar mapa en Streamlit
+st.title('Mapa de Energía Activa - ZNI Colombia')
+st_folium(m,  height=800, use_container_width=True)
 
 ###############################################################################
 #     GRAFICO INTREACTIVO DE BARRAS HORIZONTALES POR DEPARTAMENTO Y AÑO       #
@@ -269,12 +338,14 @@ with st.sidebar.container():
     st.header('Navegación')
     st.markdown('[Inicio](#inicio)')
     st.markdown('[Atributos del Dataset](#atributos-del-dataset)')
+    st.markdown('[Mapa Colombia](#mapa-colombia)')
     st.markdown('[Evolución Energía Activa](#evolucion-energia-activa)')
     st.markdown('[Indicadores](#indicadores)')
     st.markdown('[Gráficas Energía](#graficas-energia)')
-    st.markdown('[Mapa Colombia](#mapa-colombia)')
 
     st.html('<br><br><br><br>')
     st.markdown('---')
     st.html('<small><a href="mailto:ingenieria@juliangiraldo.co" target="_blank">Desarrollado por: Julian Giraldo</a></small>')
+
+
 
