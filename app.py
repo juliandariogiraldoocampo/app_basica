@@ -179,7 +179,18 @@ folium.GeoJson(
 
 # Mostrar mapa en Streamlit
 st.subheader('Mapa de Energía Activa - ZNI Colombia')
-st_folium(m,  height=800, use_container_width=True)
+output = st_folium(m,  height=800, use_container_width=True)
+
+# Debug: mostrar el contenido completo del output
+if output:
+    st.write("Contenido de output:", output)
+    
+if output and output.get('last_object_clicked'):
+    # Acceder a las propiedades del feature clickeado
+    props = output.get('last_object_clicked_properties')
+    if props and 'NOMBRE_DPT' in props:
+        nombre_depto = props['NOMBRE_DPT']
+        st.write(f"Departamento seleccionado: {nombre_depto}")
 
 ###############################################################################
 #     GRAFICO INTREACTIVO DE BARRAS HORIZONTALES POR DEPARTAMENTO Y AÑO       #
